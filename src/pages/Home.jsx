@@ -15,6 +15,8 @@ const ClockIcon = getIcon('Clock');
 const CheckCircleIcon = getIcon('CheckCircle');
 const TargetIcon = getIcon('Target');
 const AlertCircleIcon = getIcon('AlertCircle');
+const Trash2Icon = getIcon('Trash2');
+const ClipboardListIcon = getIcon('ClipboardList');
 
 function Home() {
   const [tasks, setTasks] = useState(() => {
@@ -240,7 +242,7 @@ function Home() {
                           onClick={() => deleteTask(task.id)}
                           className="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
                         >
-                          {getIcon('Trash2')({ className: "w-4 h-4" })}
+                          <Trash2Icon className="w-4 h-4" />
                         </button>
                       </div>
                     </motion.div>
@@ -252,7 +254,7 @@ function Home() {
                       animate={{ scale: 1, opacity: 1 }}
                       className="flex justify-center mb-3"
                     >
-                      {getIcon('ClipboardList')({ className: "w-12 h-12 text-surface-400 dark:text-surface-500" })}
+                      <ClipboardListIcon className="w-12 h-12 text-surface-400 dark:text-surface-500" />
                     </motion.div>
                     <h3 className="text-lg font-medium mb-1">No tasks yet</h3>
                     <p>Add your first task to get started!</p>
