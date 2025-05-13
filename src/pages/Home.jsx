@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'react-toastify';
-import { format } from 'date-fns';
-import MainFeature from '../components/MainFeature';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import TaskForm from '../components/TaskForm';
+import TaskList from '../components/TaskList';
 import getIcon from '../utils/iconUtils';
 
 // Declare icons
@@ -10,118 +9,59 @@ const LayoutDashboardIcon = getIcon('LayoutDashboard');
 const CalendarIcon = getIcon('Calendar');
 const ListChecksIcon = getIcon('ListChecks');
 const BellIcon = getIcon('Bell');
-const PlusIcon = getIcon('Plus');
-const ClockIcon = getIcon('Clock');
-const CheckCircleIcon = getIcon('CheckCircle');
-const TargetIcon = getIcon('Target');
-const AlertCircleIcon = getIcon('AlertCircle');
-const Trash2Icon = getIcon('Trash2');
-const ClipboardListIcon = getIcon('ClipboardList');
 
 function Home() {
-  const [tasks, setTasks] = useState(() => {
-    const savedTasks = localStorage.getItem('tasks');
-    return savedTasks ? JSON.parse(savedTasks) : [
-      {
-        id: '1',
-        title: 'Complete project proposal',
-        description: 'Draft the initial proposal for the new client project',
-        status: 'In Progress',
-        priority: 'High',
-        dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: '2',
-        title: 'Review team updates',
-        description: 'Go through weekly updates from the development team',
-        status: 'Not Started',
-        priority: 'Medium',
-        dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: '3',
-        title: 'Send client invoice',
-        description: 'Prepare and send invoice for the completed project phase',
-        status: 'Completed',
-        priority: 'Low',
-        dueDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        createdAt: new Date().toISOString(),
-      }
-    ];
-  });
-  
+  const [tasks, setTasks] = useState([]);
   const [stats, setStats] = useState({
     total: 0,
     completed: 0,
     inProgress: 0,
     upcoming: 0
   });
-  
-  // Calculate statistics
-  useEffect(() => {
+
+  // Update statistics when tasks change
+  const updateStats = (tasksData) => {
     const now = new Date();
-    
+
     const newStats = {
-      total: tasks.length,
-      completed: tasks.filter(task => task.status === 'Completed').length,
-      inProgress: tasks.filter(task => task.status === 'In Progress').length,
-      upcoming: tasks.filter(task => {
+      total: tasksData.length,
+      completed: tasksData.filter(task => task.status === 'Completed').length,
+      inProgress: tasksData.filter(task => task.status === 'In Progress').length,
+      upcoming: tasksData.filter(task => {
         const dueDate = new Date(task.dueDate);
         return dueDate > now && task.status !== 'Completed';
       }).length
     };
-    
+
     setStats(newStats);
-    
-    // Save tasks to localStorage
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-  }, [tasks]);
-  
-  const addTask = (task) => {
+  };
+
+  // Handle task changes (from TaskList component)
+  const handleTasksChange = (updatedTasks) => {
+    setTasks(updatedTasks);
+    updateStats(updatedTasks);
+  };
+
+  // Handle new task added (from TaskForm component)
+  const handleTaskAdded = (newTask) => {
+    const updatedTasks = [...tasks, newTask];
+    setTasks(updatedTasks);
+    updateStats(updatedTasks);
+  };
+
+  // Handle task form submission (used in MainFeature)
+  const handleMainFeatureAdd = (task) => {
     const newTask = {
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
+      id: task.id || Date.now().toString(),
+      createdAt: task.createdAt || new Date().toISOString(),
       ...task
     };
     
-    setTasks(prev => [...prev, newTask]);
-    toast.success("Task added successfully!");
+    const updatedTasks = [...tasks, newTask];
+    setTasks(updatedTasks);
+    updateStats(updatedTasks);
   };
-  
-  const updateTaskStatus = (id, status) => {
-    setTasks(prev => 
-      prev.map(task => 
-        task.id === id ? { ...task, status } : task
-      )
-    );
-    toast.info(`Task marked as ${status}`);
-  };
-  
-  const deleteTask = (id) => {
-    setTasks(prev => prev.filter(task => task.id !== id));
-    toast.error("Task deleted");
-  };
-  
-  const getPriorityClass = (priority) => {
-    switch(priority) {
-      case 'High': return 'task-priority-high';
-      case 'Medium': return 'task-priority-medium';
-      case 'Low': return 'task-priority-low';
-      default: return '';
-    }
-  };
-  
-  const getStatusIcon = (status) => {
-    switch(status) {
-      case 'Completed': return <CheckCircleIcon className="w-5 h-5 text-green-500" />;
-      case 'In Progress': return <ClockIcon className="w-5 h-5 text-blue-500" />;
-      case 'Not Started': return <AlertCircleIcon className="w-5 h-5 text-yellow-500" />;
-      default: return null;
-    }
-  };
-  
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row gap-6">
@@ -178,90 +118,21 @@ function Home() {
         
         <div className="w-full md:w-3/4 space-y-6">
           <section>
-            <MainFeature onAddTask={addTask} />
+            <div className="card relative overflow-hidden">
+              <div className="absolute top-0 right-0 h-32 w-32 -mt-12 -mr-12 bg-primary/10 rounded-full blur-2xl transform rotate-45"></div>
+              <div className="absolute bottom-0 left-0 h-32 w-32 -mb-12 -ml-12 bg-secondary/10 rounded-full blur-2xl"></div>
+              
+              <div className="relative">
+                <TaskForm onTaskAdded={handleTaskAdded} />
+              </div>
+            </div>
           </section>
           
           <section className="card">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Your Tasks</h2>
-              <button className="btn btn-primary flex items-center gap-2">
-                <PlusIcon className="w-4 h-4" />
-                <span>New Task</span>
-              </button>
             </div>
-            
-            <div className="space-y-3">
-              <AnimatePresence>
-                {tasks.length > 0 ? (
-                  tasks.map(task => (
-                    <motion.div
-                      key={task.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: -100 }}
-                      className={`task-item ${getPriorityClass(task.priority)}`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="checkbox-container mt-1">
-                          <input 
-                            type="checkbox" 
-                            className="checkbox-input"
-                            checked={task.status === 'Completed'}
-                            onChange={() => updateTaskStatus(
-                              task.id, 
-                              task.status === 'Completed' ? 'Not Started' : 'Completed'
-                            )}
-                          />
-                        </div>
-                        <div>
-                          <h3 className={`font-medium ${task.status === 'Completed' ? 'line-through text-surface-400 dark:text-surface-500' : ''}`}>
-                            {task.title}
-                          </h3>
-                          <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
-                            {task.description}
-                          </p>
-                          <div className="flex items-center gap-3 mt-2">
-                            <span className="flex items-center gap-1 text-xs text-surface-500 dark:text-surface-400">
-                              <CalendarIcon className="w-3 h-3" />
-                              {format(new Date(task.dueDate), 'MMM dd, yyyy')}
-                            </span>
-                            <span className="flex items-center gap-1 text-xs text-surface-500 dark:text-surface-400">
-                              <TargetIcon className="w-3 h-3" />
-                              {task.priority}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <div className="px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
-                          {getStatusIcon(task.status)}
-                          <span>{task.status}</span>
-                        </div>
-                        <button 
-                          onClick={() => deleteTask(task.id)}
-                          className="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
-                        >
-                          <Trash2Icon className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))
-                ) : (
-                  <div className="text-center py-10 text-surface-500 dark:text-surface-400">
-                    <motion.div
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      className="flex justify-center mb-3"
-                    >
-                      <ClipboardListIcon className="w-12 h-12 text-surface-400 dark:text-surface-500" />
-                    </motion.div>
-                    <h3 className="text-lg font-medium mb-1">No tasks yet</h3>
-                    <p>Add your first task to get started!</p>
-                  </div>
-                )}
-              </AnimatePresence>
-            </div>
+            <TaskList onTasksChange={handleTasksChange} />
           </section>
         </div>
       </div>
